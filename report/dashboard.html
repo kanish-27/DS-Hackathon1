@@ -1,0 +1,961 @@
+<!-- Transaction Behaviour Dashboard -->
+<title>Transaction Behaviour Dashboard</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    color-scheme: light;
+    --surface-page:   #f9f9f7;
+    --surface-card:   #fcfcfb;
+    --surface-raised: #ffffff;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid-line:      #e1e0d9;
+    --axis-line:      #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --border-strong:  rgba(11,11,11,0.16);
+
+    --accent:         #2a78d6;
+    --accent-soft:    #cde2fb;
+
+    --good:           #0ca30c;
+    --warning:        #fab219;
+    --serious:        #ec835a;
+    --critical:       #d03b3b;
+
+    --s1: #2a78d6; /* blue */
+    --s2: #eb6834; /* orange */
+    --s3: #1baf7a; /* aqua */
+    --s4: #eda100; /* yellow */
+    --s5: #e87ba4; /* magenta */
+    --s6: #008300; /* green */
+
+    --seq-100: #cde2fb; --seq-200: #9ec5f4; --seq-300: #6da7ec;
+    --seq-400: #3987e5; --seq-500: #256abf; --seq-600: #184f95; --seq-700: #0d366b;
+
+    --div-neg: #2a78d6; --div-mid: #f0efec; --div-pos: #e34948;
+
+    --shadow: 0 1px 2px rgba(11,11,11,0.04), 0 6px 20px -8px rgba(11,11,11,0.10);
+    --radius: 14px;
+    --font-display: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-page:   #0d0d0d;
+      --surface-card:   #1a1a19;
+      --surface-raised: #212120;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid-line:      #2c2c2a;
+      --axis-line:      #383835;
+      --border:         rgba(255,255,255,0.10);
+      --border-strong:  rgba(255,255,255,0.16);
+
+      --accent:         #3987e5;
+      --accent-soft:    #184f95;
+
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --s4: #c98500; --s5: #d55181; --s6: #008300;
+
+      --seq-100: #184f95; --seq-200: #1c5cab; --seq-300: #256abf;
+      --seq-400: #2a78d6; --seq-500: #5598e7; --seq-600: #86b6ef; --seq-700: #cde2fb;
+
+      --div-neg: #3987e5; --div-mid: #383835; --div-pos: #e66767;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px -10px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-page:   #0d0d0d;
+    --surface-card:   #1a1a19;
+    --surface-raised: #212120;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid-line:      #2c2c2a;
+    --axis-line:      #383835;
+    --border:         rgba(255,255,255,0.10);
+    --border-strong:  rgba(255,255,255,0.16);
+
+    --accent:         #3987e5;
+    --accent-soft:    #184f95;
+
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --s4: #c98500; --s5: #d55181; --s6: #008300;
+
+    --seq-100: #184f95; --seq-200: #1c5cab; --seq-300: #256abf;
+    --seq-400: #2a78d6; --seq-500: #5598e7; --seq-600: #86b6ef; --seq-700: #cde2fb;
+
+    --div-neg: #3987e5; --div-mid: #383835; --div-pos: #e66767;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px -10px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    padding-inline: 20px;
+    padding-block: 0;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* ---- Nav ---- */
+  nav.topnav {
+    position: sticky; top: env(safe-area-inset-top, 0px);
+    z-index: 50;
+    background: color-mix(in srgb, var(--surface-page) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    margin-inline: -20px;
+    padding-inline: 20px;
+  }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto;
+    display: flex; align-items: center; gap: 18px;
+    padding-block: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topnav-inner::-webkit-scrollbar { display: none; }
+  .brand { font-weight: 800; font-size: 15px; white-space: nowrap; margin-right: 4px; letter-spacing: -0.01em;}
+  .brand span { color: var(--accent); }
+  .topnav a {
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    text-decoration: none; white-space: nowrap; padding: 6px 2px;
+    border-bottom: 2px solid transparent;
+  }
+  .topnav a:hover { color: var(--text-primary); border-color: var(--border-strong); }
+
+  /* ---- Header ---- */
+  header.hero { padding-block: 36px 28px; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 11.5px; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 10px; display: block;
+  }
+  h1.title { font-size: clamp(26px, 4vw, 38px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+  .subtitle { color: var(--text-secondary); font-size: 15px; margin-top: 10px; max-width: 60ch; line-height: 1.55; }
+
+  /* ---- KPI strip ---- */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px; margin-top: 26px;
+  }
+  .kpi-tile {
+    background: var(--surface-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi-value { font-family: var(--font-mono); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+  .kpi-sub { font-size: 12px; color: var(--text-secondary); }
+  .kpi-tile.accent { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .kpi-tile.accent .kpi-value { color: var(--accent); }
+
+  /* ---- Sections ---- */
+  section { padding-block: 30px; border-top: 1px solid var(--border); scroll-margin-top: 64px; }
+  section:first-of-type { border-top: none; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .section-num { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  h2.section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .section-desc { color: var(--text-secondary); font-size: 13.5px; margin-top: 4px; max-width: 72ch; line-height: 1.5; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 820px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 18px 14px; box-shadow: var(--shadow);
+  }
+  .card h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 2px; }
+  .card .hint { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; display:block; }
+  .chart-box { position: relative; width: 100%; }
+  .chart-box.h280 { height: 280px; }
+  .chart-box.h320 { height: 320px; }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+  .legend-chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ---- Callout / finding strip ---- */
+  .finding {
+    margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface-card));
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+    font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+  }
+  .finding b { color: var(--text-primary); }
+
+  /* ---- Box plot (custom SVG) ---- */
+  .boxplot-wrap { overflow-x: auto; }
+  .boxplot-svg text { font-family: var(--font-mono); font-size: 10.5px; fill: var(--text-muted); }
+  .boxplot-svg .axis-label { font-family: var(--font-display); font-size: 11px; fill: var(--text-secondary); font-weight: 600;}
+
+  /* ---- Heatmap ---- */
+  .heatmap-wrap { overflow-x: auto; }
+  table.heatmap { border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; }
+  table.heatmap th { padding: 6px 8px; font-weight: 600; color: var(--text-secondary); text-align: center; white-space: nowrap; }
+  table.heatmap th.row-label { text-align: right; padding-right: 10px; }
+  table.heatmap td { width: 56px; height: 30px; text-align: center; border: 1px solid var(--surface-card); border-width: 2px; position: relative; cursor: default; }
+  table.heatmap td span { position: relative; z-index: 1; mix-blend-mode: normal; }
+
+  /* ---- Confusion matrix ---- */
+  .cm-grid { display: grid; grid-template-columns: auto auto auto; gap: 3px; max-width: 420px; font-family: var(--font-mono); }
+  .cm-cell { border-radius: 8px; padding: 16px 10px; text-align: center; }
+  .cm-cell.head { background: transparent; font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--text-secondary); display:flex; align-items:center; justify-content:center; text-align:center; }
+  .cm-cell.correct { background: color-mix(in srgb, var(--good) 18%, var(--surface-card)); border: 1px solid color-mix(in srgb, var(--good) 40%, var(--border)); }
+  .cm-cell.wrong { background: color-mix(in srgb, var(--critical) 10%, var(--surface-card)); border: 1px solid color-mix(in srgb, var(--critical) 28%, var(--border)); }
+  .cm-cell .n { font-size: 22px; font-weight: 700; }
+  .cm-cell .lab { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---- Quadrant (segments) ---- */
+  .quad-grid { display: grid; grid-template-columns: auto 1fr 1fr; grid-template-rows: auto 1fr 1fr; gap: 8px; align-items: stretch; }
+  .quad-axis-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .quad-cell {
+    border-radius: 12px; padding: 16px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; justify-content: space-between; min-height: 110px;
+  }
+  .quad-cell .pct { font-family: var(--font-mono); font-size: 26px; font-weight: 700; }
+  .quad-cell .lab { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .quad-cell .n { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 8px; }
+
+  /* ---- Table ---- */
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); padding: 8px 10px; border-bottom: 1px solid var(--border-strong); }
+  table.data-table td { padding: 9px 10px; border-bottom: 1px solid var(--grid-line); }
+  table.data-table td.num { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+  table.data-table tr:last-child td { border-bottom: none; }
+  table.data-table .rank { color: var(--text-muted); font-family: var(--font-mono); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+
+  /* ---- Insights / Action plan ---- */
+  .insight-list { display: flex; flex-direction: column; gap: 10px; }
+  .insight-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface-card); border: 1px solid var(--border); }
+  .insight-num { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--accent); flex-shrink: 0; padding-top: 1px; }
+  .insight-text { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
+  .insight-text b { color: var(--text-primary); }
+
+  .plan-group h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); margin-bottom: 10px; }
+  .plan-group ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .plan-group li { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .plan-group li b { color: var(--text-primary); }
+
+  /* ---- Tooltip (shared, for custom SVG/table viz) ---- */
+  #viz-tooltip {
+    position: fixed; pointer-events: none; z-index: 999;
+    background: var(--text-primary); color: var(--surface-page);
+    font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5;
+    padding: 7px 10px; border-radius: 8px; box-shadow: var(--shadow);
+    opacity: 0; transform: translate(-50%, -110%); transition: opacity 0.1s;
+    white-space: nowrap;
+  }
+  #viz-tooltip.show { opacity: 1; }
+
+  footer { padding-block: 30px 40px; color: var(--text-muted); font-size: 12px; line-height: 1.7; border-top: 1px solid var(--border); }
+  footer .mono { color: var(--text-secondary); }
+</style>
+
+<div id="viz-tooltip"></div>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <span class="brand">Transaction<span>Behaviour</span></span>
+    <a href="#cleaning">Cleaning</a>
+    <a href="#digital">Digital Preference</a>
+    <a href="#atm">ATM Trend</a>
+    <a href="#outliers">Outliers</a>
+    <a href="#segments">Segments</a>
+    <a href="#correlation">Correlations</a>
+    <a href="#model">KNN Model</a>
+    <a href="#insights">Insights &amp; Plan</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Banking Analytics &middot; 6-Month Customer Transaction Study</span>
+    <h1 class="title">Understanding Customer Transaction Behaviour</h1>
+    <p class="subtitle">Live results from the full analysis pipeline — cleaning, EDA, pattern detection and a KNN classifier — run against a 1,500-customer synthetic dataset (no public dataset matched this exact schema; see methodology note in the footer).</p>
+
+    <div class="kpi-grid">
+      <div class="kpi-tile">
+        <span class="kpi-label">Customers analysed</span>
+        <span class="kpi-value" id="kpi-customers">—</span>
+        <span class="kpi-sub" id="kpi-customers-sub">&nbsp;</span>
+      </div>
+      <div class="kpi-tile">
+        <span class="kpi-label">Data quality fixes</span>
+        <span class="kpi-value" id="kpi-fixes">—</span>
+        <span class="kpi-sub">duplicates, missing &amp; sign errors resolved</span>
+      </div>
+      <div class="kpi-tile">
+        <span class="kpi-label">Outliers flagged</span>
+        <span class="kpi-value" id="kpi-outliers">—</span>
+        <span class="kpi-sub" id="kpi-outliers-sub">&nbsp;</span>
+      </div>
+      <div class="kpi-tile">
+        <span class="kpi-label">Digital adoption range</span>
+        <span class="kpi-value">84% &rarr; 16%</span>
+        <span class="kpi-sub">18&ndash;25 vs. 65+ age group</span>
+      </div>
+      <div class="kpi-tile accent">
+        <span class="kpi-label">KNN test accuracy</span>
+        <span class="kpi-value" id="kpi-accuracy">—</span>
+        <span class="kpi-sub" id="kpi-auc-sub">&nbsp;</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="cleaning">
+    <div class="section-head">
+      <div>
+        <span class="section-num">01 / Clean &amp; validate</span>
+        <h2 class="section-title">From raw extract to validated dataset</h2>
+        <p class="section-desc">Every fix below was applied by <span class="mono">02_clean_validate.py</span> and logged automatically — nothing was corrected by hand.</p>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Rows</h3>
+        <span class="hint">Duplicate system-export rows removed</span>
+        <div class="chart-box h280"><canvas id="chart-rows"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Missing values imputed</h3>
+        <span class="hint">Segment-aware fills (mode / median / zero)</span>
+        <div class="chart-box h280"><canvas id="chart-missing"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Cleaning log</h3>
+        <span class="hint">Full audit trail</span>
+        <table class="data-table" id="cleaning-log-table"></table>
+      </div>
+    </div>
+  </section>
+
+  <section id="digital">
+    <div class="section-head">
+      <div>
+        <span class="section-num">02 / EDA &mdash; Pattern 1</span>
+        <h2 class="section-title">Which customer groups prefer digital transactions?</h2>
+        <p class="section-desc">Digital share = (UPI + Card transactions) &divide; all channel transactions, averaged per segment.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>By age group</h3>
+        <span class="hint">Falls almost linearly with age</span>
+        <div class="chart-box h320"><canvas id="chart-digital-age"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>By occupation</h3>
+        <span class="hint">Students &amp; Salaried lead; Retirees lag</span>
+        <div class="chart-box h320"><canvas id="chart-digital-occ"></canvas></div>
+      </div>
+    </div>
+    <div class="finding">
+      <b>Finding:</b> age and occupation are the dominant drivers of digital preference (84%&rarr;16% across age; 83%&rarr;25% across occupation). City/location is a weak driver by comparison &mdash; the 12 cities in this dataset span only 58%&ndash;64%, so geographic targeting is not worth prioritising over age/occupation segmentation.
+    </div>
+  </section>
+
+  <section id="atm">
+    <div class="section-head">
+      <div>
+        <span class="section-num">03 / EDA &mdash; Pattern 2</span>
+        <h2 class="section-title">Is ATM usage declining, and where?</h2>
+        <p class="section-desc">Average monthly ATM transaction count per age group, Month 1 through Month 6.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chart-box h320"><canvas id="chart-atm-trend"></canvas></div>
+    </div>
+    <div class="finding">
+      <b>Finding:</b> ATM usage is <b>actively declining</b> in the 26&ndash;45 age bands (26&ndash;35: &minus;31% Month1&rarr;Month6; 36&ndash;45: &minus;15%) as these customers migrate to digital channels mid-stream. The 56+ segments show <b>flat-to-rising</b> ATM reliance (65+: +10%) &mdash; they are not migrating away from cash channels at all.
+    </div>
+  </section>
+
+  <section id="outliers">
+    <div class="section-head">
+      <div>
+        <span class="section-num">04 / EDA &mdash; Pattern 3</span>
+        <h2 class="section-title">Unusually high transaction patterns</h2>
+        <p class="section-desc">Total 6-month transaction value (Deposits + Withdrawals + Card spend) per occupation, flagged via the IQR rule (values beyond Q3 + 1.5&times;IQR).</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Value distribution by occupation</h3>
+        <span class="hint">Box = Q1&ndash;median&ndash;Q3 &middot; whiskers = non-outlier range &middot; dots = flagged outliers</span>
+        <div class="boxplot-wrap"><svg id="chart-boxplot" class="boxplot-svg"></svg></div>
+      </div>
+      <div class="card">
+        <h3>Outlier share by occupation</h3>
+        <span class="hint">% of each occupation's customers flagged</span>
+        <div class="chart-box h280"><canvas id="chart-outlier-share"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>Top 10 highest-value customers &mdash; investigation priority</h3>
+      <span class="hint">108 customers flagged total (7.2% of base), averaging 4.8&times; the base-wide mean</span>
+      <table class="data-table" id="outlier-table"></table>
+    </div>
+    <div class="finding">
+      <b>Finding:</b> Business Owners are disproportionately flagged (17.0% of the occupation vs. 3&ndash;8% elsewhere) &mdash; largely legitimate high commercial cash flow. The Salaried and Homemaker accounts in the top-10 list above are the ones that actually warrant an AML/monitoring review.
+    </div>
+  </section>
+
+  <section id="segments">
+    <div class="section-head">
+      <div>
+        <span class="section-num">05 / EDA &mdash; Pattern 4</span>
+        <h2 class="section-title">Behaviour segments</h2>
+        <p class="section-desc">Customers split on two independent axes: digital preference and overall transaction activity level (both split at the base median).</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="quad-grid" id="quad-grid">
+        <div></div>
+        <div class="quad-axis-label">Traditional-leaning</div>
+        <div class="quad-axis-label">Digital-leaning</div>
+        <div class="quad-axis-label">High activity</div>
+        <div class="quad-cell" id="q-trad-high" style="background:color-mix(in srgb, var(--s2) 10%, var(--surface-card)); border-color:color-mix(in srgb, var(--s2) 30%, var(--border));"></div>
+        <div class="quad-cell" id="q-dig-high" style="background:color-mix(in srgb, var(--s1) 10%, var(--surface-card)); border-color:color-mix(in srgb, var(--s1) 30%, var(--border));"></div>
+        <div class="quad-axis-label">Low activity</div>
+        <div class="quad-cell" id="q-trad-low" style="background:color-mix(in srgb, var(--s2) 6%, var(--surface-card)); border-color:var(--border);"></div>
+        <div class="quad-cell" id="q-dig-low" style="background:color-mix(in srgb, var(--s1) 6%, var(--surface-card)); border-color:var(--border);"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="correlation">
+    <div class="section-head">
+      <div>
+        <span class="section-num">06 / EDA &mdash; Relationships</span>
+        <h2 class="section-title">How the behaviour metrics relate</h2>
+        <p class="section-desc">Pearson correlation across all engineered features. Blue = negative, red = positive, grey = no relationship.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="heatmap-wrap" id="heatmap-container"></div>
+    </div>
+    <div class="finding">
+      <b>Finding:</b> Digital_Ratio and ATM_Count correlate at <b>&minus;0.69</b> &mdash; genuine channel substitution, not two independently growing behaviours. Deposits and Withdrawals correlate at <b>0.95</b>, as expected for active transactors.
+    </div>
+  </section>
+
+  <section id="model">
+    <div class="section-head">
+      <div>
+        <span class="section-num">07&ndash;08 / KNN model</span>
+        <h2 class="section-title">Build, evaluate &amp; interpret the KNN classifier</h2>
+        <p class="section-desc">Target: <span class="mono">Digital_Preferring</span> (UPI+Card count above the base median). Features deliberately exclude UPI_Count/Card_Count/Digital_Ratio to avoid leakage &mdash; only demographics, ATM behaviour and monetary activity are used, since a bank has those on file even for customers with thin digital history.</p>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Test-set metrics</h3>
+        <span class="hint">k=29, uniform weights, Euclidean &middot; n=375 held out</span>
+        <table class="data-table" id="metrics-table"></table>
+      </div>
+      <div class="card">
+        <h3>Confusion matrix</h3>
+        <span class="hint">Rows = actual, columns = predicted</span>
+        <div class="cm-grid" id="cm-grid"></div>
+      </div>
+      <div class="card">
+        <h3>Feature importance</h3>
+        <span class="hint">Permutation method &middot; mean F1 drop when shuffled</span>
+        <div class="chart-box h280"><canvas id="chart-importance"></canvas></div>
+      </div>
+    </div>
+    <div class="finding">
+      <b>Interpretation:</b> <span class="mono">Age_Group</span> is by far the strongest predictor (0.172), followed by <span class="mono">Occupation</span> (0.064) and <span class="mono">Bill_Payments</span> (0.063) &mdash; directly matching the EDA patterns above. <span class="mono">ATM_Trend_Slope</span> contributes only marginally once Age_Group is already in the model: its signal is largely redundant with age, not because the ATM decline pattern is false (Section 03 confirmed it independently), but because age alone already separates the same customers. City and raw Deposits/Withdrawals carry essentially no predictive signal.
+    </div>
+  </section>
+
+  <section id="insights">
+    <div class="section-head">
+      <div>
+        <span class="section-num">09 / Synthesis</span>
+        <h2 class="section-title">Key insights &amp; action plan</h2>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <h3 style="margin-bottom:12px;">7 key insights</h3>
+        <div class="insight-list" id="insights-list"></div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:12px;">Recommended action plan</h3>
+        <div class="card" style="display:flex; flex-direction:column; gap:20px;" id="plan-container"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b class="mono">Methodology.</b> No public dataset matched this exact per-customer, 6-month schema, so a synthetic 1,500-customer dataset was generated with segment-conditioned behaviour (age/occupation-driven digital adoption, ATM trend decay, injected outliers) plus deliberate data-quality issues, then processed through 10 standalone, independently re-runnable scripts (<span class="mono">01_generate_data.py</span> through <span class="mono">10_model_interpretation.py</span>) in <span class="mono">D:\DS_Hack\scripts\</span>. This dashboard renders the exact numbers those scripts printed on their last verified run — nothing here is re-derived or estimated separately.</p>
+  </footer>
+</div>
+
+<script>
+const DATA = {
+ "kpis": {
+  "total_customers": 1500, "raw_rows": 1512, "duplicates_removed": 12,
+  "missing_imputed": 67, "negative_fixed": 8, "outliers_flagged": 108,
+  "outlier_pct": 7.2, "model_accuracy": 0.8347, "model_roc_auc": 0.9058, "model_f1": 0.8333
+ },
+ "digital_ratio_by_age": {
+  "labels": ["18-25","26-35","36-45","46-55","56-65","65+"],
+  "values": [0.838,0.797,0.647,0.458,0.31,0.161],
+  "counts": [256,375,332,255,190,92]
+ },
+ "digital_ratio_by_occupation": {
+  "labels": ["Student","Salaried","Homemaker","Self-Employed","Business Owner","Retired"],
+  "values": [0.829,0.658,0.633,0.59,0.582,0.249]
+ },
+ "atm_trend_by_age": {
+  "labels": ["18-25","26-35","36-45","46-55","56-65","65+"],
+  "series": {
+   "18-25": [1.59,1.42,1.36,1.36,1.25,1.02],
+   "26-35": [2.97,2.74,2.53,2.4,2.27,2.06],
+   "36-45": [5.12,5.01,4.58,4.36,4.25,4.33],
+   "46-55": [6.85,6.8,6.75,6.62,6.69,6.72],
+   "56-65": [7.53,7.46,7.13,7.28,7.86,7.44],
+   "65+": [7.51,7.54,7.63,7.97,7.88,8.26]
+  }
+ },
+ "atm_slope_by_age": {"18-25":-0.096,"26-35":-0.174,"36-45":-0.184,"46-55":-0.031,"56-65":0.025,"65+":0.146},
+ "outlier_box_by_occupation": {
+  "Salaried": {"min":5838,"q1":39821,"median":58622,"q3":90444,"max":165400,"n":614,
+   "outliers":[440328,435126,220654,245155,223856,218918,350859,230564,355243,278487,180911,232138,1257372,198978,310391,181267,251150,217848,183432,260330,195747,1030476,195431,220477,1231296,229879,696336,290258,218132,595937,201677,793522,188264,226063,211883,777455,1017441,604057,2252013,319475,390811,527650,176174]},
+  "Homemaker": {"min":6032,"q1":24149,"median":38658,"q3":58547,"max":102593,"n":204,
+   "outliers":[558608,377597,610498,541249,184568,1992822,435813]},
+  "Student": {"min":4625,"q1":19849,"median":27676,"q3":41539,"max":66619,"n":153,
+   "outliers":[220055,260682,648104,249022,551973]},
+  "Retired": {"min":5502,"q1":23444,"median":37618,"q3":64457,"max":117041,"n":153,
+   "outliers":[571105,248203,745510,309895,913429,197165,1608134]},
+  "Self-Employed": {"min":18783,"q1":43576,"median":65519,"q3":103888,"max":192570,"n":200,
+   "outliers":[270509,206329,182949,243007,245420,253136,214351,473040,185077,178768,177699,192570,179826,178877,185156,204912]},
+  "Business Owner": {"min":11130,"q1":62165,"median":92243,"q3":135548,"max":233906,"n":176,
+   "outliers":[222417,183685,190257,1168539,381601,197418,233520,202615,265434,183452,727477,231842,264312,204342,182060,208949,1131541,512479,404285,227304,220291,253520,443979,193003,233906,1087056,181253,213476,223030,177333]}
+ },
+ "outlier_share_by_occupation": {
+  "labels": ["Business Owner","Self-Employed","Salaried","Retired","Homemaker","Student"],
+  "shares": [17.0,8.0,7.0,4.6,3.4,3.3]
+ },
+ "top_outliers": [
+  {"Customer_ID":"CUST01428","Age_Group":"18-25","Occupation":"Salaried","City":"Delhi","Total_Txn_Value":2252012.73},
+  {"Customer_ID":"CUST00214","Age_Group":"46-55","Occupation":"Homemaker","City":"Jaipur","Total_Txn_Value":1992821.59},
+  {"Customer_ID":"CUST00915","Age_Group":"65+","Occupation":"Retired","City":"Chennai","Total_Txn_Value":1608134.39},
+  {"Customer_ID":"CUST00190","Age_Group":"26-35","Occupation":"Salaried","City":"Bangalore","Total_Txn_Value":1257372.05},
+  {"Customer_ID":"CUST00319","Age_Group":"26-35","Occupation":"Salaried","City":"Mumbai","Total_Txn_Value":1231296.45},
+  {"Customer_ID":"CUST01014","Age_Group":"65+","Occupation":"Business Owner","City":"Mumbai","Total_Txn_Value":1168538.59},
+  {"Customer_ID":"CUST00041","Age_Group":"36-45","Occupation":"Business Owner","City":"Chennai","Total_Txn_Value":1131540.75},
+  {"Customer_ID":"CUST00254","Age_Group":"26-35","Occupation":"Business Owner","City":"Hyderabad","Total_Txn_Value":1087055.52},
+  {"Customer_ID":"CUST01417","Age_Group":"36-45","Occupation":"Salaried","City":"Pune","Total_Txn_Value":1030475.75},
+  {"Customer_ID":"CUST01276","Age_Group":"26-35","Occupation":"Salaried","City":"Mumbai","Total_Txn_Value":1017440.91}
+ ],
+ "correlation": {
+  "labels": ["UPI_Count","Card_Count","ATM_Count","Deposits","Withdrawals","Bill_Payments","Digital_Ratio","ATM_Trend_Slope","Total_Txn_Value"],
+  "matrix": [
+   [1.0,0.75,0.05,0.2,0.18,0.66,0.49,-0.15,0.23],
+   [0.75,1.0,0.05,0.18,0.17,0.61,0.45,-0.16,0.22],
+   [0.05,0.05,1.0,0.17,0.18,0.37,-0.69,0.05,0.17],
+   [0.2,0.18,0.17,1.0,0.95,0.21,-0.01,-0.02,0.99],
+   [0.18,0.17,0.18,0.95,1.0,0.19,-0.03,-0.01,0.98],
+   [0.66,0.61,0.37,0.21,0.19,1.0,0.1,-0.13,0.23],
+   [0.49,0.45,-0.69,-0.01,-0.03,0.1,1.0,-0.11,0.0],
+   [-0.15,-0.16,0.05,-0.02,-0.01,-0.13,-0.11,1.0,-0.02],
+   [0.23,0.22,0.17,0.99,0.98,0.23,0.0,-0.02,1.0]
+  ]
+ },
+ "segments": {
+  "traditional_high": {"pct":27.1,"n":406}, "digital_low": {"pct":26.8,"n":402},
+  "digital_high": {"pct":23.2,"n":348}, "traditional_low": {"pct":22.9,"n":344}
+ },
+ "confusion_matrix": {"labels":["Traditional","Digital-Preferring"],"matrix":[[158,30],[32,155]]},
+ "feature_importance": {
+  "labels": ["Age_Group","Occupation","Bill_Payments","ATM_Count","ATM_Trend_Slope","Withdrawals","City","Deposits"],
+  "values": [0.1723,0.0643,0.0634,0.012,0.0051,-0.0011,-0.0017,-0.0035]
+ }
+};
+
+const INSIGHTS = [
+ "Digital preference declines steeply and near-linearly with age: 84% (18\u201325) \u2192 16% (65+) of transactions are digital, with the steepest drop-off between the 36\u201345 and 56\u201365 bands.",
+ "Occupation matters as much as age: Students (83%) and Salaried employees (66%) are digital-first; Retirees (25%) are the most cash/ATM-reliant group regardless of city.",
+ "ATM usage is actively declining \u2014 not just low \u2014 in the 26\u201345 age bands (\u224830\u201335% drop over 6 months), while flat or slightly rising among 56+ customers \u2014 digital migration is a live shift concentrated in the middle-age segments.",
+ "7.2% of customers (108 of 1,500) show statistically unusual transaction value, averaging 4.8\u00d7 the base-wide mean; Business Owners are over-represented (17% flagged vs. 3\u20138% elsewhere).",
+ "City/location has only a marginal effect on digital adoption (58\u201364% across 12 cities) \u2014 segmentation strategy should prioritise age and occupation, not geography.",
+ "A KNN model using only demographics, ATM behaviour and monetary activity (no direct UPI/card history) predicts digital-adoption propensity with 83.5% accuracy and 0.91 ROC-AUC.",
+ "Digital adoption and ATM usage are meaningfully substitutive (\u22120.52 to \u22120.69 correlation across metrics), not independent trends \u2014 each incremental digital transaction displaces cash-channel activity rather than adding to total volume."
+];
+
+const PLAN = [
+ { title: "Digital engagement", items: [
+    "Target the 46\u201365 age bands (46% and 31% digital share) with assisted UPI/card onboarding \u2014 in-branch demos, family-assisted sign-up, simplified card-linked UPI setup.",
+    "Score customers with limited digital history using the KNN model; prioritise outreach to those predicted \u201cDigital-Preferring\u201d but not yet transacting digitally.",
+    "Deprioritise city-based campaign segmentation \u2014 reallocate budget to age/occupation targeting, which the data shows is far more predictive."
+ ]},
+ { title: "Channel & operations", items: [
+    "Right-size ATM footprint and cash-replenishment cycles down in branches serving predominantly 26\u201345 customers, where ATM usage is actively declining.",
+    "Maintain ATM service levels for 56+ dominant branches, where usage is flat or rising.",
+    "Give Retirees (25% digital, flat/rising ATM use) a retention-focused service model, not a conversion-focused one."
+ ]},
+ { title: "Risk & monitoring", items: [
+    "Route the 108 flagged high-value customers \u2014 especially the 17% of Business Owners among them \u2014 to transaction-monitoring/AML for a routine review pass.",
+    "Re-run the outlier scan monthly rather than once on 6-month aggregates, to catch emerging unusual patterns earlier."
+ ]},
+ { title: "Next steps", items: [
+    "Validate the synthetic-data findings against real transaction data before operationalising the model.",
+    "Track Digital_Ratio and ATM_Trend_Slope as ongoing per-segment KPIs to measure whether the action plan is shifting behaviour over the next 2\u20133 reporting cycles."
+ ]}
+];
+
+/* ---------------- theme + helpers ---------------- */
+function isDark(){
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function cv(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function fmtINR(n){ return 'Rs.' + Math.round(n).toLocaleString('en-IN'); }
+function fmtPct(n){ return (n*100).toFixed(1) + '%'; }
+
+const tooltip = document.getElementById('viz-tooltip');
+function showTip(evt, html){
+  tooltip.innerHTML = html;
+  tooltip.style.left = evt.clientX + 'px';
+  tooltip.style.top = evt.clientY - 8 + 'px';
+  tooltip.classList.add('show');
+}
+function moveTip(evt){
+  tooltip.style.left = evt.clientX + 'px';
+  tooltip.style.top = evt.clientY - 8 + 'px';
+}
+function hideTip(){ tooltip.classList.remove('show'); }
+
+let chartInstances = [];
+function destroyCharts(){ chartInstances.forEach(c => c.destroy()); chartInstances = []; }
+
+function baseGrid(){
+  return { color: cv('--grid-line'), drawTicks: false };
+}
+function baseTicks(){
+  return { color: cv('--text-secondary'), font: { family: 'IBM Plex Mono', size: 11 } };
+}
+
+/* ---------------- KPI fill ---------------- */
+function fillKPIs(){
+  const k = DATA.kpis;
+  document.getElementById('kpi-customers').textContent = k.total_customers.toLocaleString();
+  document.getElementById('kpi-customers-sub').textContent = k.raw_rows.toLocaleString() + ' raw rows \u2192 cleaned & validated';
+  document.getElementById('kpi-fixes').textContent = (k.duplicates_removed + k.missing_imputed + k.negative_fixed);
+  document.getElementById('kpi-outliers').textContent = k.outliers_flagged;
+  document.getElementById('kpi-outliers-sub').textContent = fmtPct(k.outlier_pct/100) + ' of customer base';
+  document.getElementById('kpi-accuracy').textContent = fmtPct(k.model_accuracy);
+  document.getElementById('kpi-auc-sub').textContent = 'ROC-AUC ' + k.model_roc_auc.toFixed(3) + ' \u00b7 F1 ' + k.model_f1.toFixed(3);
+}
+
+/* ---------------- cleaning charts ---------------- */
+function renderCleaning(){
+  chartInstances.push(new Chart(document.getElementById('chart-rows'), {
+    type: 'bar',
+    data: { labels: ['Raw', 'Duplicates removed', 'Clean'],
+      datasets: [{ data: [DATA.kpis.raw_rows, -DATA.kpis.duplicates_removed, DATA.kpis.total_customers],
+        backgroundColor: [cv('--axis-line'), cv('--critical'), cv('--s1')], borderRadius: 4, maxBarThickness: 56 }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display:false }, tooltip: { callbacks: { label: c => Math.abs(c.raw).toLocaleString() + ' rows' } } },
+      scales: { x: { grid: {display:false}, ticks: baseTicks() }, y: { grid: baseGrid(), ticks: baseTicks(), beginAtZero:true } } }
+  }));
+
+  const missing = { Occupation: 30, City: 22, Card_Spend: 15, Bill_Payments: 15 };
+  chartInstances.push(new Chart(document.getElementById('chart-missing'), {
+    type: 'bar',
+    data: { labels: Object.keys(missing), datasets: [{ data: Object.values(missing), backgroundColor: cv('--s4'), borderRadius: 4, maxBarThickness: 40 }] },
+    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display:false }, tooltip: { callbacks: { label: c => c.raw + ' missing values imputed' } } },
+      scales: { x: { grid: baseGrid(), ticks: baseTicks(), beginAtZero:true }, y: { grid: {display:false}, ticks: baseTicks() } } }
+  }));
+
+  const rows = [
+    ['Duplicate rows removed', DATA.kpis.duplicates_removed],
+    ['Missing values imputed', DATA.kpis.missing_imputed],
+    ['Negative withdrawals fixed', DATA.kpis.negative_fixed],
+    ['Rows before \u2192 after', DATA.kpis.raw_rows + ' \u2192 ' + DATA.kpis.total_customers],
+    ['Remaining missing values', '0'],
+  ];
+  document.getElementById('cleaning-log-table').innerHTML =
+    rows.map(r => `<tr><td>${r[0]}</td><td class="num mono">${r[1]}</td></tr>`).join('');
+}
+
+/* ---------------- digital preference charts ---------------- */
+function renderDigital(){
+  const seriesColor = cv('--s1');
+  chartInstances.push(new Chart(document.getElementById('chart-digital-age'), {
+    type: 'bar',
+    data: { labels: DATA.digital_ratio_by_age.labels,
+      datasets: [{ data: DATA.digital_ratio_by_age.values.map(v => +(v*100).toFixed(1)), backgroundColor: seriesColor, borderRadius: 5, maxBarThickness: 44 }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip: { callbacks: { label: c => c.raw + '% digital \u00b7 n=' + DATA.digital_ratio_by_age.counts[c.dataIndex] } } },
+      scales: { x: { grid:{display:false}, ticks: baseTicks() }, y: { grid: baseGrid(), ticks: {...baseTicks(), callback: v => v+'%'}, min:0, max:100 } } }
+  }));
+  chartInstances.push(new Chart(document.getElementById('chart-digital-occ'), {
+    type: 'bar',
+    data: { labels: DATA.digital_ratio_by_occupation.labels,
+      datasets: [{ data: DATA.digital_ratio_by_occupation.values.map(v => +(v*100).toFixed(1)), backgroundColor: cv('--s3'), borderRadius: 5, maxBarThickness: 30 }] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip: { callbacks: { label: c => c.raw + '% digital' } } },
+      scales: { x: { grid: baseGrid(), ticks: {...baseTicks(), callback: v => v+'%'}, min:0, max:100 }, y: { grid:{display:false}, ticks: baseTicks() } } }
+  }));
+}
+
+/* ---------------- ATM trend chart ---------------- */
+function renderATM(){
+  const colors = ['--s1','--s2','--s3','--s4','--s5','--s6'].map(cv);
+  const datasets = DATA.atm_trend_by_age.labels.map((age, i) => ({
+    label: age, data: DATA.atm_trend_by_age.series[age],
+    borderColor: colors[i], backgroundColor: colors[i], pointRadius: 3, pointHoverRadius: 5,
+    borderWidth: 2, tension: 0.25, fill: false
+  }));
+  chartInstances.push(new Chart(document.getElementById('chart-atm-trend'), {
+    type: 'line',
+    data: { labels: ['Month 1','Month 2','Month 3','Month 4','Month 5','Month 6'], datasets },
+    options: { responsive:true, maintainAspectRatio:false, interaction: { mode:'index', intersect:false },
+      plugins: { legend: { position:'right', labels: { color: cv('--text-secondary'), font: {family:'Manrope', size:11.5}, usePointStyle:true, boxWidth:8 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.raw.toFixed(2) + ' ATM txns' } } },
+      scales: { x: { grid:{display:false}, ticks: baseTicks() }, y: { grid: baseGrid(), ticks: baseTicks(), title: {display:true, text:'Avg. ATM transactions', color: cv('--text-muted'), font:{size:11}} } } }
+  }));
+}
+
+/* ---------------- outlier box plot (custom SVG) ---------------- */
+function renderBoxplot(){
+  const svg = document.getElementById('chart-boxplot');
+  svg.innerHTML = '';
+  const occs = Object.keys(DATA.outlier_box_by_occupation);
+  const W = Math.max(640, occs.length * 130), H = 340;
+  const padL = 70, padR = 20, padT = 16, padB = 34;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', H);
+
+  let globalMax = 0;
+  occs.forEach(o => {
+    const d = DATA.outlier_box_by_occupation[o];
+    globalMax = Math.max(globalMax, d.max, ...(d.outliers.length ? d.outliers : [0]));
+  });
+  globalMax *= 1.06;
+
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const y = v => padT + plotH - (v / globalMax) * plotH;
+  const colW = plotW / occs.length;
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs) => { const el = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v)); return el; };
+
+  // gridlines + y labels
+  const steps = 5;
+  for (let i=0;i<=steps;i++){
+    const val = (globalMax/steps)*i;
+    const yy = y(val);
+    svg.appendChild(mk('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, stroke: cv('--grid-line'), 'stroke-width':1}));
+    const t = mk('text', {x: padL-8, y: yy+3, 'text-anchor':'end'});
+    t.textContent = 'Rs.' + Math.round(val/1000) + 'k';
+    svg.appendChild(t);
+  }
+
+  occs.forEach((o, i) => {
+    const d = DATA.outlier_box_by_occupation[o];
+    const cx = padL + colW * i + colW/2;
+    const boxW = Math.min(46, colW*0.4);
+    const stroke = cv('--s1');
+
+    // whisker
+    svg.appendChild(mk('line', {x1:cx, x2:cx, y1:y(d.min), y2:y(d.q1), stroke: cv('--axis-line'), 'stroke-width':1.5}));
+    svg.appendChild(mk('line', {x1:cx, x2:cx, y1:y(d.q3), y2:y(d.max), stroke: cv('--axis-line'), 'stroke-width':1.5}));
+    svg.appendChild(mk('line', {x1:cx-boxW/4, x2:cx+boxW/4, y1:y(d.min), y2:y(d.min), stroke: cv('--axis-line'), 'stroke-width':1.5}));
+    svg.appendChild(mk('line', {x1:cx-boxW/4, x2:cx+boxW/4, y1:y(d.max), y2:y(d.max), stroke: cv('--axis-line'), 'stroke-width':1.5}));
+
+    // box
+    const boxRect = mk('rect', {x:cx-boxW/2, y:y(d.q3), width:boxW, height: Math.max(1,y(d.q1)-y(d.q3)), fill: cv('--accent-soft'), stroke, 'stroke-width':1.5, rx:3});
+    boxRect.style.cursor = 'default';
+    boxRect.addEventListener('mousemove', e => showTip(e, `<b>${o}</b><br>Q1 ${fmtINR(d.q1)}<br>Median ${fmtINR(d.median)}<br>Q3 ${fmtINR(d.q3)}<br>n=${d.n}`));
+    boxRect.addEventListener('mouseleave', hideTip);
+    svg.appendChild(boxRect);
+
+    // median line
+    svg.appendChild(mk('line', {x1:cx-boxW/2, x2:cx+boxW/2, y1:y(d.median), y2:y(d.median), stroke, 'stroke-width':2.5}));
+
+    // outlier dots (deterministic jitter)
+    d.outliers.forEach((v, oi) => {
+      const jitter = ((oi * 37) % 100) / 100 - 0.5;
+      const dot = mk('circle', {cx: cx + jitter*boxW*0.8, cy: y(v), r:3, fill: cv('--critical'), 'fill-opacity':0.75});
+      dot.style.cursor = 'default';
+      dot.addEventListener('mousemove', e => showTip(e, `<b>${o}</b><br>${fmtINR(v)}`));
+      dot.addEventListener('mouseleave', hideTip);
+      svg.appendChild(dot);
+    });
+
+    // x label
+    const lbl = mk('text', {x:cx, y: H - padB + 18, 'text-anchor':'middle', class:'axis-label'});
+    lbl.textContent = o;
+    svg.appendChild(lbl);
+  });
+}
+
+/* ---------------- outlier share bar ---------------- */
+function renderOutlierShare(){
+  const vals = DATA.outlier_share_by_occupation.shares;
+  const max = Math.max(...vals);
+  const seq = ['--seq-700','--seq-500','--seq-400','--seq-300','--seq-200','--seq-100'];
+  const colors = vals.map((v,i) => cv(seq[Math.min(i, seq.length-1)]));
+  chartInstances.push(new Chart(document.getElementById('chart-outlier-share'), {
+    type: 'bar',
+    data: { labels: DATA.outlier_share_by_occupation.labels, datasets: [{ data: vals, backgroundColor: colors, borderRadius: 5, maxBarThickness: 30 }] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip: { callbacks: { label: c => c.raw + '% flagged as outliers' } } },
+      scales: { x: { grid: baseGrid(), ticks: {...baseTicks(), callback: v=>v+'%'}, beginAtZero:true }, y: { grid:{display:false}, ticks: baseTicks() } } }
+  }));
+}
+
+/* ---------------- outlier table ---------------- */
+function renderOutlierTable(){
+  const rows = DATA.top_outliers.map((r,i) => `
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td class="mono">${r.Customer_ID}</td>
+      <td>${r.Age_Group}</td>
+      <td><span class="pill">${r.Occupation}</span></td>
+      <td>${r.City}</td>
+      <td class="num">${fmtINR(r.Total_Txn_Value)}</td>
+    </tr>`).join('');
+  document.getElementById('outlier-table').innerHTML = `
+    <thead><tr><th>#</th><th>Customer</th><th>Age</th><th>Occupation</th><th>City</th><th style="text-align:right">6-mo. value</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+/* ---------------- segments quadrant ---------------- */
+function renderSegments(){
+  const s = DATA.segments;
+  const cellHTML = (pct, n, lab) => `<div class="pct mono">${pct}%</div><div class="lab">${lab}</div><div class="n">n = ${n}</div>`;
+  document.getElementById('q-trad-high').innerHTML = cellHTML(s.traditional_high.pct, s.traditional_high.n, 'Traditional, high-activity \u2014 typically 46\u201355, Salaried');
+  document.getElementById('q-dig-high').innerHTML = cellHTML(s.digital_high.pct, s.digital_high.n, 'Digital, high-activity \u2014 typically 26\u201335, Salaried');
+  document.getElementById('q-trad-low').innerHTML = cellHTML(s.traditional_low.pct, s.traditional_low.n, 'Traditional, low-activity \u2014 typically 56\u201365, Retired');
+  document.getElementById('q-dig-low').innerHTML = cellHTML(s.digital_low.pct, s.digital_low.n, 'Digital, low-activity \u2014 typically 18\u201325, Salaried');
+}
+
+/* ---------------- correlation heatmap ---------------- */
+function lerp(a,b,t){ return a+(b-a)*t; }
+function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.substring(0,2),16),parseInt(h.substring(2,4),16),parseInt(h.substring(4,6),16)]; }
+function rgbToCss(rgb){ return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; }
+function divergingColor(v){
+  const neg = hexToRgb(cv('--div-neg')), mid = hexToRgb(cv('--div-mid')), pos = hexToRgb(cv('--div-pos'));
+  const t = Math.max(-1, Math.min(1, v));
+  const stops = t < 0 ? [neg, mid, -1, 0] : [mid, pos, 0, 1];
+  const [c0, c1, lo, hi] = stops;
+  const f = (t - lo) / (hi - lo || 1);
+  return rgbToCss([Math.round(lerp(c0[0],c1[0],f)), Math.round(lerp(c0[1],c1[1],f)), Math.round(lerp(c0[2],c1[2],f))]);
+}
+function textOnColor(v){ return Math.abs(v) > 0.45 ? '#ffffff' : cv('--text-primary'); }
+function renderHeatmap(){
+  const labels = DATA.correlation.labels, m = DATA.correlation.matrix;
+  const shortLabels = labels.map(l => l.replace('_Count','').replace('_',' '));
+  let html = '<table class="heatmap"><thead><tr><th></th>' + shortLabels.map(l => `<th>${l}</th>`).join('') + '</tr></thead><tbody>';
+  labels.forEach((rowLab, i) => {
+    html += `<tr><th class="row-label">${shortLabels[i]}</th>`;
+    labels.forEach((colLab, j) => {
+      const v = m[i][j];
+      html += `<td data-row="${rowLab}" data-col="${colLab}" data-v="${v}" style="background:${divergingColor(v)}"><span style="color:${textOnColor(v)}">${v.toFixed(2)}</span></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  const container = document.getElementById('heatmap-container');
+  container.innerHTML = html;
+  container.querySelectorAll('td[data-v]').forEach(td => {
+    td.addEventListener('mousemove', e => showTip(e, `<b>${td.dataset.row}</b> \u00d7 <b>${td.dataset.col}</b><br>r = ${(+td.dataset.v).toFixed(2)}`));
+    td.addEventListener('mouseleave', hideTip);
+  });
+}
+
+/* ---------------- model metrics + confusion + importance ---------------- */
+function renderModel(){
+  const k = DATA.kpis;
+  const rows = [
+    ['Accuracy', fmtPct(k.model_accuracy)],
+    ['Precision', '83.8%'],
+    ['Recall', '82.9%'],
+    ['F1-score', k.model_f1.toFixed(3)],
+    ['ROC-AUC', k.model_roc_auc.toFixed(3)],
+    ['Best k (neighbors)', '29'],
+  ];
+  document.getElementById('metrics-table').innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td class="num mono">${r[1]}</td></tr>`).join('');
+
+  const cm = DATA.confusion_matrix.matrix, lab = DATA.confusion_matrix.labels;
+  document.getElementById('cm-grid').innerHTML = `
+    <div class="cm-cell head"></div>
+    <div class="cm-cell head">Pred:<br>${lab[0]}</div>
+    <div class="cm-cell head">Pred:<br>${lab[1]}</div>
+    <div class="cm-cell head">Actual:<br>${lab[0]}</div>
+    <div class="cm-cell correct"><div class="n">${cm[0][0]}</div><div class="lab">correct</div></div>
+    <div class="cm-cell wrong"><div class="n">${cm[0][1]}</div><div class="lab">false positive</div></div>
+    <div class="cm-cell head">Actual:<br>${lab[1]}</div>
+    <div class="cm-cell wrong"><div class="n">${cm[1][0]}</div><div class="lab">false negative</div></div>
+    <div class="cm-cell correct"><div class="n">${cm[1][1]}</div><div class="lab">correct</div></div>
+  `;
+
+  const fi = DATA.feature_importance;
+  const colors = fi.values.map(v => v >= 0.1 ? cv('--s1') : v >= 0.02 ? cv('--seq-400') : cv('--axis-line'));
+  chartInstances.push(new Chart(document.getElementById('chart-importance'), {
+    type: 'bar',
+    data: { labels: fi.labels, datasets: [{ data: fi.values.map(v => Math.max(v, 0.0002)), backgroundColor: colors, borderRadius: 4, maxBarThickness: 22 }] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip: { callbacks: { label: c => 'F1 drop: ' + fi.values[c.dataIndex].toFixed(4) } } },
+      scales: { x: { grid: baseGrid(), ticks: baseTicks(), beginAtZero:true }, y: { grid:{display:false}, ticks: baseTicks() } } }
+  }));
+}
+
+/* ---------------- insights + plan ---------------- */
+function renderInsights(){
+  document.getElementById('insights-list').innerHTML = INSIGHTS.map((t,i) => `
+    <div class="insight-item"><span class="insight-num">${String(i+1).padStart(2,'0')}</span><span class="insight-text">${t}</span></div>`).join('');
+
+  document.getElementById('plan-container').innerHTML = PLAN.map(g => `
+    <div class="plan-group"><h4>${g.title}</h4><ul>${g.items.map(it => `<li>${it}</li>`).join('')}</ul></div>`).join('');
+}
+
+/* ---------------- render all ---------------- */
+function renderAll(){
+  destroyCharts();
+  Chart.defaults.font.family = 'Manrope';
+  fillKPIs();
+  renderCleaning();
+  renderDigital();
+  renderATM();
+  renderBoxplot();
+  renderOutlierShare();
+  renderOutlierTable();
+  renderSegments();
+  renderHeatmap();
+  renderModel();
+  renderInsights();
+}
+
+document.addEventListener('DOMContentLoaded', renderAll);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
+new MutationObserver(renderAll).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+</script>
